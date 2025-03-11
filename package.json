@@ -1,8 +1,10 @@
 {
-  "name": "paste-and-indent",
-  "displayName": "paste-and-indent",
+  "name": "copy-paste-and-indent",
+  "displayName": "Copy/Paste and Indent",
   "description": "Properly indents copied code on paste",
   "version": "0.0.1",
+  "publisher": "jefflongo",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/jefflongo/vscode-paste-and-indent/issues"
   },
@@ -60,5 +62,8 @@
     "@vscode/vsce": "^3.2.2",
     "eslint": "^9.21.0",
     "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "vsce": "^2.15.0"
   }
 }
