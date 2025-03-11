@@ -1,6 +1,6 @@
 # Copy/Paste and Indent
 
-Copy/Paste and Indent enables intelligent pasting of copied text such that it is automatically aligned to the current indentation level. There are several other extensions which attempt to serve a similar purpose; I found that none of them worked quite right, so I made my own.
+[Copy/Paste and Indent](https://marketplace.visualstudio.com/items?itemName=jefflongo.copy-paste-and-indent) enables intelligent pasting of copied text such that it is automatically aligned to the current indentation level. There are several other extensions which attempt to serve a similar purpose; I found that none of them worked quite right, so I made my own.
 
 ## Installation
 

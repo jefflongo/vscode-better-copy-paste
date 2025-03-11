@@ -131,8 +131,8 @@ async function paste() {
 
 export function activate(context: vscode.ExtensionContext) {
 	const disposables = [
-		vscode.commands.registerCommand("paste-and-indent.copy", copy),
-		vscode.commands.registerCommand("paste-and-indent.paste", paste)
+		vscode.commands.registerCommand("copy-paste-and-indent.copy", copy),
+		vscode.commands.registerCommand("copy-paste-and-indent.paste", paste)
 	];
 
 	context.subscriptions.concat(disposables);

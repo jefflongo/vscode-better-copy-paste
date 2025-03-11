@@ -7,10 +7,10 @@ async function runCopyPaste(
 	const editor = await vscode.window.showTextDocument(document);
 
 	editor.selections = copySelections;
-	await vscode.commands.executeCommand('paste-and-indent.copy');
+	await vscode.commands.executeCommand('copy-paste-and-indent.copy');
 
 	editor.selections = pasteSelections;
-	await vscode.commands.executeCommand('paste-and-indent.paste');
+	await vscode.commands.executeCommand('copy-paste-and-indent.paste');
 
 	return document.getText();
 }

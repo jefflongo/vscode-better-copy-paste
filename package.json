@@ -21,21 +21,21 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:paste-and-indent.copy",
-    "onCommand:paste-and-indent.paste"
+    "onCommand:copy-paste-and-indent.copy",
+    "onCommand:copy-paste-and-indent.paste"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [],
     "keybindings": [
       {
-        "command": "paste-and-indent.copy",
+        "command": "copy-paste-and-indent.copy",
         "key": "ctrl+c",
         "mac": "cmd+c",
         "when": "editorTextFocus"
       },
       {
-        "command": "paste-and-indent.paste",
+        "command": "copy-paste-and-indent.paste",
         "key": "ctrl+v",
         "mac": "cmd+v",
         "when": "editorTextFocus && !editorReadonly"
