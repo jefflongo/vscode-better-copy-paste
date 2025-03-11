@@ -18,9 +18,9 @@ When pasting, the indentation level is determined for the line that the cursor i
 
 Paste indentation level is determined by examining existing indentation on the line where the cursor is present or where a selection is started. This means that the line must already be indented to the desired indentation level before pasting. This extension _does not_ look at surrounding context, such as `{` or `}` characters from preceding lines to determine indentation level.
 
-### Tabs Are Replaced With Spaces
+### Mixing Tabs and Spaces Is Not Supported
 
-Currently, all indentation is replaced with spaces, regardless of whether the source content contained tabs or spaces.
+Currently, indentation is assumed to be either all tabs or all spaces.
 
 ### Other Extensions That Shadow Copy/Paste
 

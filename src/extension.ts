@@ -1,5 +1,17 @@
 import * as vscode from 'vscode';
 
+function getIndentation(input: string): string {
+	return input.match(/^(\s*)/)?.[0] || "";
+}
+
+function removeIndentation(input: string, n: number): string {
+	return input.replace(new RegExp(`^\\s{0,${n}}`), "");
+}
+
+function isWhitespace(input: string): boolean {
+	return input.trim().length === 0;
+}
+
 async function copy() {
 	const editor = vscode.window.activeTextEditor;
 	if (!editor) {
@@ -25,20 +37,17 @@ async function copy() {
 
 	for (const selection of selections) {
 		for (let i = selection.start.line; i <= selection.end.line; i++) {
-			// for the given line of this selection, get the entire line (whether the entire
-			// line is selected or not)
+			// get the entire line, even if the selection only includes a portion of the line
 			const line = editor.document.lineAt(i).text;
 
 			// strip all indentation from whitespace-only lines
-			if (line.trim().length === 0) {
+			if (isWhitespace(line)) {
 				selectedLines.push("");
 				continue;
 			}
 
-			// determine the amount of whitespace of this line
-			const indentation = line.match(/^(\s*)/)?.[0].length || 0;
-
-			// update the minimum indentation
+			// determine the amount of whitespace on this line
+			const indentation = getIndentation(line).length;
 			if (minimumIndentation === undefined || indentation < minimumIndentation) {
 				minimumIndentation = indentation;
 			}
@@ -60,9 +69,9 @@ async function copy() {
 	}
 
 	// unindent the lines
-	const unindentedLines = selectedLines.map(line =>
-		line.replace(new RegExp(`^\\s{0,${minimumIndentation}}`), "")
-	).join(eol);
+	const unindentedLines = selectedLines
+		.map(line => removeIndentation(line, minimumIndentation))
+		.join(eol);
 
 	// write to the clipboard
 	await vscode.env.clipboard.writeText(unindentedLines);
@@ -81,16 +90,19 @@ async function paste() {
 
 	const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
-	// split clipboard text into lines
-	const lines = clipboardText.split(/\n|\r\n|\n\r/);
+	// split clipboard text into lines, clearing any whitespace-only lines to match the format from
+	// `copy`, in case the text was copied externally.
+	const lines = clipboardText.split(/\n|\r\n|\n\r/).map(line => isWhitespace(line) ? "" : line);
 
 	// determine the minimum indentation in the clipboard.
-	// this step was performed in `copy`, but the text may have been copied from outside of vscode.
+	// this step was performed in `copy`, but the text may have been copied externally.
 	// make an attempt to unindent the copied text in this case, even though we don't have the
 	// context to properly handle the first line.
 	let minimumIndentation: number | undefined = undefined;
-	for (const line of lines) {
-		const indentation = line.match(/^(\s*)/)?.[0].length || 0;
+
+	for (let line of lines) {
+		// determine the amount of whitespace on this line
+		const indentation = getIndentation(line).length;
 		if (minimumIndentation === undefined || indentation < minimumIndentation) {
 			minimumIndentation = indentation;
 		}
@@ -102,25 +114,22 @@ async function paste() {
 	}
 
 	// unindent the lines
-	const preprocessedLines = lines.map(line =>
-		line.replace(new RegExp(`^\\s{0,${minimumIndentation}}`), "")
-	);
+	const unindentedLines = lines.map(line => removeIndentation(line, minimumIndentation));
 
 	await editor.edit(editBuilder => {
 		// paste at each cursor/selection
 		editor.selections.forEach(selection => {
-
 			// get the indentation at the cursor
 			const firstLine = editor.document.lineAt(selection.start.line).text;
 			const textBeforeCursor = firstLine.slice(0, selection.start.character);
-			const indentation = textBeforeCursor.match(/^(\s*)/)?.[0] || "";
+			const indentation = getIndentation(textBeforeCursor);
 
 			// apply indentation to lines that:
 			// 1. aren't the first line (it's already indented)
 			// 2. are non-empty
-			const indentedText = preprocessedLines
+			const indentedText = unindentedLines
 				.map((line, index) =>
-					index !== 0 && line.trim().length !== 0 ? indentation + line : line)
+					index !== 0 && !isWhitespace(line) ? indentation + line : line)
 				.join(eol);
 
 			// replace the selected text (or insert if selection is empty)
