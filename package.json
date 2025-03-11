@@ -2,7 +2,7 @@
   "name": "copy-paste-and-indent",
   "displayName": "Copy/Paste and Indent",
   "description": "Properly indents copied code on paste",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "publisher": "jefflongo",
   "license": "MIT",
   "bugs": {

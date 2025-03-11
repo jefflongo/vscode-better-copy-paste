@@ -88,6 +88,8 @@ async function paste() {
 		return;
 	}
 
+	const editorConfig = vscode.workspace.getConfiguration("editor");
+	const formatOnPaste = editorConfig.get<boolean>("formatOnPaste", false);
 	const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
 	// split clipboard text into lines, clearing any whitespace-only lines to match the format from
@@ -136,6 +138,11 @@ async function paste() {
 			editBuilder.replace(selection, indentedText);
 		});
 	});
+
+	// if formatOnPaste is enabled, do it now
+	if (formatOnPaste) {
+		await vscode.commands.executeCommand('editor.action.formatDocument');
+	}
 }
 
 export function activate(context: vscode.ExtensionContext) {
