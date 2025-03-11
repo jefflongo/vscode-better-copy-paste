@@ -1,15 +1,45 @@
 import * as assert from 'assert';
-
-// You can import and use all API from the 'vscode' module
-// as well as import your extension to test it
 import * as vscode from 'vscode';
-import * as extension from '../../src/extension';
 
-suite('Extension Test Suite', () => {
-	vscode.window.showInformationMessage('Start all tests.');
+async function runCopyPaste(
+	input: string, copySelections: vscode.Selection[], pasteSelections: vscode.Selection[]) {
+	const document = await vscode.workspace.openTextDocument({ content: input });
+	const editor = await vscode.window.showTextDocument(document);
 
-	test('Sample test', () => {
-		assert.strictEqual(-1, [1, 2, 3].indexOf(5));
-		assert.strictEqual(-1, [1, 2, 3].indexOf(0));
+	editor.selections = copySelections;
+	await vscode.commands.executeCommand('paste-and-indent.copy');
+
+	editor.selections = pasteSelections;
+	await vscode.commands.executeCommand('paste-and-indent.paste');
+
+	return document.getText();
+}
+
+suite("Extension Test Suite", () => {
+	test("Unindent multiline function call", async () => {
+		const input = [
+			'def foo():"',
+			'    print("',
+			'        "hello"',
+			'    )',
+			'',
+			'',
+		].join("\n");
+
+		const output = await runCopyPaste(
+			input, [new vscode.Selection(1, 4, 3, 5)], [new vscode.Selection(5, 0, 5, 0)]
+		);
+		const expectedOutput = [
+			'def foo():"',
+			'    print("',
+			'        "hello"',
+			'    )',
+			'',
+			'print("',
+			'    "hello"',
+			')',
+		].join("\n");
+
+		assert.strictEqual(output, expectedOutput);
 	});
 });

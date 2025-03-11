@@ -47,7 +47,7 @@ async function copy() {
 			if (i === selection.start.line || i === selection.end.line) {
 				const start = i === selection.start.line ? selection.start.character : 0;
 				const end = i === selection.end.line ? selection.end.character : line.length;
-				selectedLines.push(line.slice(start, end))
+				selectedLines.push(line.slice(start, end));
 			} else {
 				selectedLines.push(line);
 			}
@@ -113,7 +113,7 @@ async function paste() {
 			// get the indentation at the cursor
 			const firstLine = editor.document.lineAt(selection.start.line).text;
 			const textBeforeCursor = firstLine.slice(0, selection.start.character);
-			const indentation = textBeforeCursor.match(/^(\s*)/)?.[0] || ""
+			const indentation = textBeforeCursor.match(/^(\s*)/)?.[0] || "";
 
 			// apply indentation to lines that:
 			// 1. aren't the first line (it's already indented)
@@ -126,7 +126,7 @@ async function paste() {
 			// replace the selected text (or insert if selection is empty)
 			editBuilder.replace(selection, indentedText);
 		});
-	})
+	});
 }
 
 export function activate(context: vscode.ExtensionContext) {
