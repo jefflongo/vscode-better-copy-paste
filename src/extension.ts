@@ -4,10 +4,6 @@ function getIndentation(input: string): string {
 	return input.match(/^(\s*)/)?.[0] || "";
 }
 
-function removeIndentation(input: string, n: number): string {
-	return input.replace(new RegExp(`^\\s{0,${n}}`), "");
-}
-
 function isWhitespace(input: string): boolean {
 	return input.trim().length === 0;
 }
@@ -32,49 +28,53 @@ async function copy() {
 		return selection;
 	}).sort((a, b) => a.start.line - b.start.line);
 
-	const selectedLines: string[] = [];
+	// we now perform two passes through the selections:
+	// this first pass determines the minimum indentation on the lines that have selections
 	let minimumIndentation: number | undefined = undefined;
-
 	for (const selection of selections) {
 		for (let i = selection.start.line; i <= selection.end.line; i++) {
-			// get the entire line, even if the selection only includes a portion of the line
 			const line = editor.document.lineAt(i).text;
 
-			// strip all indentation from whitespace-only lines
-			if (isWhitespace(line)) {
-				selectedLines.push("");
-				continue;
-			}
-
-			// determine the amount of whitespace on this line
-			const indentation = getIndentation(line).length;
-			if (minimumIndentation === undefined || indentation < minimumIndentation) {
-				minimumIndentation = indentation;
-			}
-
-			// save the selected portion of the line
-			if (i === selection.start.line || i === selection.end.line) {
-				const start = i === selection.start.line ? selection.start.character : 0;
-				const end = i === selection.end.line ? selection.end.character : line.length;
-				selectedLines.push(line.slice(start, end));
-			} else {
-				selectedLines.push(line);
+			if (!isWhitespace(line)) {
+				const indentation = getIndentation(line).length;
+				if (minimumIndentation === undefined || indentation < minimumIndentation) {
+					minimumIndentation = indentation;
+				}
 			}
 		}
 	}
+	minimumIndentation ??= 0;
 
-	// in case only whitespace lines are copied
-	if (minimumIndentation === undefined) {
-		minimumIndentation = 0;
+	// this second pass unindents the lines and saves the selected portions of them
+	const unindentedLines: string[] = [];
+	for (const selection of selections) {
+		for (let i = selection.start.line; i <= selection.end.line; i++) {
+			const line = editor.document.lineAt(i).text;
+
+			// unindent
+			const unindentedLine = line.slice(minimumIndentation);
+
+			// determine the portion of the unindented line that is selected
+			const start = i === selection.start.line ?
+				Math.max(selection.start.character - minimumIndentation, 0) : 0;
+			const end = i === selection.end.line ?
+				Math.max(selection.end.character - minimumIndentation, 0) : unindentedLine.length;
+			let unindentedSelection = unindentedLine.slice(start, end);
+
+			// the first line of the selection may have additional indentation that wasn't selected.
+			// append that indentation to the front.
+			if (i === selection.start.line) {
+				const textBeforeCursor = unindentedLine.slice(0, start);
+				const indentation = getIndentation(textBeforeCursor);
+				unindentedSelection = indentation + unindentedSelection;
+			}
+
+			unindentedLines.push(unindentedSelection);
+		}
 	}
 
-	// unindent the lines
-	const unindentedLines = selectedLines
-		.map(line => removeIndentation(line, minimumIndentation))
-		.join(eol);
-
 	// write to the clipboard
-	await vscode.env.clipboard.writeText(unindentedLines);
+	await vscode.env.clipboard.writeText(unindentedLines.join(eol));
 }
 
 async function paste() {
@@ -92,31 +92,25 @@ async function paste() {
 	const formatOnPaste = editorConfig.get<boolean>("formatOnPaste", false);
 	const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
-	// split clipboard text into lines, clearing any whitespace-only lines to match the format from
-	// `copy`, in case the text was copied externally.
-	const lines = clipboardText.split(/\n|\r\n|\n\r/).map(line => isWhitespace(line) ? "" : line);
+	const lines = clipboardText.split(/\n|\r\n|\n\r/);
 
 	// determine the minimum indentation in the clipboard.
 	// this step was performed in `copy`, but the text may have been copied externally.
 	// make an attempt to unindent the copied text in this case, even though we don't have the
 	// context to properly handle the first line.
 	let minimumIndentation: number | undefined = undefined;
-
-	for (let line of lines) {
-		// determine the amount of whitespace on this line
-		const indentation = getIndentation(line).length;
-		if (minimumIndentation === undefined || indentation < minimumIndentation) {
-			minimumIndentation = indentation;
+	for (const line of lines) {
+		if (!isWhitespace(line)) {
+			const indentation = getIndentation(line).length;
+			if (minimumIndentation === undefined || indentation < minimumIndentation) {
+				minimumIndentation = indentation;
+			}
 		}
 	}
+	minimumIndentation ??= 0;
 
-	// in case only whitespace lines are copied
-	if (minimumIndentation === undefined) {
-		minimumIndentation = 0;
-	}
-
-	// unindent the lines
-	const unindentedLines = lines.map(line => removeIndentation(line, minimumIndentation));
+	// unindent
+	const unindentedLines = lines.map(line => line.slice(minimumIndentation));
 
 	await editor.edit(editBuilder => {
 		// paste at each cursor/selection
@@ -126,20 +120,16 @@ async function paste() {
 			const textBeforeCursor = firstLine.slice(0, selection.start.character);
 			const indentation = getIndentation(textBeforeCursor);
 
-			// apply indentation to lines that:
-			// 1. aren't the first line (it's already indented)
-			// 2. are non-empty
+			// apply indentation to lines that aren't the first line (already indented)
 			const indentedText = unindentedLines
-				.map((line, index) =>
-					index !== 0 && !isWhitespace(line) ? indentation + line : line)
-				.join(eol);
+				.map((line, index) => index !== 0 ? indentation + line : line).join(eol);
 
 			// replace the selected text (or insert if selection is empty)
 			editBuilder.replace(selection, indentedText);
 		});
 	});
 
-	// if formatOnPaste is enabled, do it now
+	// if format on paste is enabled, do it now
 	if (formatOnPaste) {
 		await vscode.commands.executeCommand('editor.action.formatDocument');
 	}

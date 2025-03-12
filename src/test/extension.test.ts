@@ -42,4 +42,26 @@ suite("Extension Test Suite", () => {
 
 		assert.strictEqual(output, expectedOutput);
 	});
+
+	test("Unindent with leading spaces", async () => {
+		const input = [
+			'        abcd',
+			'    e',
+			'',
+			'',
+		].join("\n");
+
+		const output = await runCopyPaste(
+			input, [new vscode.Selection(0, 9, 1, 5)], [new vscode.Selection(3, 0, 3, 0)]
+		);
+		const expectedOutput = [
+			'        abcd',
+			'    e',
+			'',
+			'    bcd',
+			'e'
+		].join("\n");
+
+		assert.strictEqual(output, expectedOutput);
+	});
 });
