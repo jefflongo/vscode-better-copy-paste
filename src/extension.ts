@@ -20,7 +20,7 @@ function getMinimumIndentation(lines: readonly string[]): number {
     return min ?? 0;
 }
 
-async function copy(cut: boolean = false) {
+async function copy(log: vscode.OutputChannel, history: string[], cut: boolean = false) {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
         return;
@@ -41,6 +41,7 @@ async function copy(cut: boolean = false) {
         (_, i) => editor.document.lineAt(selection.start.line + i).text)
     );
     const minimumIndentation = getMinimumIndentation(lines);
+    log.appendLine(`Copy: unindented by ${minimumIndentation} characters`);
 
     // get the text to be copied to the clipboard
     let toClipboard = selections.flatMap((selection) => {
@@ -97,15 +98,30 @@ async function copy(cut: boolean = false) {
         });
     }
 
+    // save the clipboard text in the history
+    const historyIndex = history.indexOf(toClipboard);
+    if (historyIndex !== 0) {
+        // if the entry is already in the history, it will be moved to the front
+        if (historyIndex !== -1) {
+            history.splice(historyIndex, 1);
+        }
+
+        // shift out the oldest entry if the history is full
+        const extensionConfig = vscode.workspace.getConfiguration("copy-paste-and-indent");
+        const maxSize = extensionConfig.get<number>("historySize", 10);
+        if (history.length >= maxSize) {
+            history.pop();
+        }
+
+        // insert the new entry to the front
+        history.unshift(toClipboard);
+    }
+
     await vscode.env.clipboard.writeText(toClipboard);
 }
 
-async function cut() {
-    await copy(true);
-}
-
-async function paste() {
-    const clipboardText = await vscode.env.clipboard.readText();
+async function paste(log: vscode.OutputChannel, text?: string) {
+    let clipboardText: string = text ?? await vscode.env.clipboard.readText();
     if (!clipboardText) {
         return;
     }
@@ -133,6 +149,7 @@ async function paste() {
     const minimumIndentation = getMinimumIndentation(lines);
     const unindentedLines =
         minimumIndentation > 0 ? lines.map(line => line.slice(minimumIndentation)) : lines;
+    let strategy = "default";
 
     // when a single line is in the clipboard containing a trailing EOL, and the selection to paste
     // in is empty, the paste is inserted at the beginning of the line.
@@ -155,14 +172,17 @@ async function paste() {
     // per copy selection.
     const numLinesWithoutTrailingEOL =
         unindentedLines.at(-1)!.length > 0 ? unindentedLines.length : unindentedLines.length - 1;
-    const spread =
-        multiCursorPaste === "spread" &&
+    if (multiCursorPaste === "spread" &&
         selections.length > 1 &&
-        selections.length === numLinesWithoutTrailingEOL;
+        selections.length === numLinesWithoutTrailingEOL) {
+        strategy = "spread";
+    }
 
     await editor.edit(editBuilder => {
         for (const [i, selection] of selections.entries()) {
-            const pasteOnNewLine = clipboardIsSingleWholeLine && selection.isEmpty;
+            if (clipboardIsSingleWholeLine && selection.isEmpty) {
+                strategy = "pasteOnNewLine";
+            }
 
             // determine the indentation at the paste location
             const firstLine = editor.document.lineAt(selection.start.line).text;
@@ -174,12 +194,12 @@ async function paste() {
                 Math.min(selection.start.character, indentation.length);
             const firstLineIndentation = indentation.slice(firstLineIndentationStart);
 
-            if (pasteOnNewLine) {
+            if (strategy === "pasteOnNewLine") {
                 // single line empty selection paste mode:
                 // indent the text and insert at the beginning of the line for each selection
                 const indentedText = indentation + unindentedLines[0] + eol;
                 editBuilder.insert(new vscode.Position(selection.start.line, 0), indentedText);
-            } else if (spread) {
+            } else if (strategy === "spread") {
                 // "spread" paste mode:
                 // unindent each individual line, reindent at the selection level, then paste one
                 // line per selection
@@ -196,6 +216,13 @@ async function paste() {
                     .join(eol);
                 editBuilder.replace(selection, indentedText);
             }
+
+            let message =
+                `Paste: indented by ${indentation.length} characters using strategy "${strategy}"`;
+            if (selections.length > 1) {
+                message += ` for selection ${i}`;
+            }
+            log.appendLine(message);
         }
     });
 
@@ -205,11 +232,49 @@ async function paste() {
     }
 }
 
+async function pasteFromHistory(log: vscode.OutputChannel, history: readonly string[]) {
+    if (history.length === 0) {
+        vscode.window.setStatusBarMessage("Clipboard is empty");
+        return;
+    }
+
+    const options: vscode.QuickPickOptions = {
+        title: "Clipboard History",
+        placeHolder: "Start typing to select..."
+    };
+
+    const text = await vscode.window.showQuickPick(history, options);
+    if (text === undefined) {
+        return;
+    }
+
+    await paste(log, text);
+}
+
 export function activate(context: vscode.ExtensionContext) {
+    const outputChannel = vscode.window.createOutputChannel("Copy Paste and Indent");
+    const history: string[] = [];
+
     const disposables = [
-        vscode.commands.registerCommand("copy-paste-and-indent.copy", copy),
-        vscode.commands.registerCommand("copy-paste-and-indent.cut", cut),
-        vscode.commands.registerCommand("copy-paste-and-indent.paste", paste),
+        vscode.commands.registerCommand(
+            "copy-paste-and-indent.copy", () => copy(outputChannel, history)
+        ),
+        vscode.commands.registerCommand(
+            "copy-paste-and-indent.cut", () => copy(outputChannel, history, true)
+        ),
+        vscode.commands.registerCommand(
+            "copy-paste-and-indent.paste", () => paste(outputChannel)
+        ),
+        vscode.commands.registerCommand(
+            "copy-paste-and-indent.pasteFromHistory", () => pasteFromHistory(outputChannel, history)
+        ),
+        vscode.commands.registerCommand(
+            "copy-paste-and-indent.clearHistory",
+            () => {
+                vscode.window.setStatusBarMessage("Clipboard history cleared");
+                history.length = 0;
+            }
+        ),
     ];
 
     context.subscriptions.concat(disposables);

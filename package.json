@@ -21,13 +21,27 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:copy-paste-and-indent.copy",
-    "onCommand:copy-paste-and-indent.cut",
-    "onCommand:copy-paste-and-indent.paste"
+    "onStartupFinished"
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [],
+    "configuration": {
+      "type": "object",
+      "properties": {
+        "copy-paste-and-indent.historySize": {
+          "type": "integer",
+          "default": 10,
+          "description": "The maximum number of entries to store in the clipboard history."
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "copy-paste-and-indent.clearHistory",
+        "title": "Clear Clipboard History",
+        "when": "editorTextFocus"
+      }
+    ],
     "keybindings": [
       {
         "command": "copy-paste-and-indent.copy",
@@ -45,6 +59,12 @@
         "command": "copy-paste-and-indent.paste",
         "key": "ctrl+v",
         "mac": "cmd+v",
+        "when": "editorTextFocus && !editorReadonly"
+      },
+      {
+        "command": "copy-paste-and-indent.pasteFromHistory",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
         "when": "editorTextFocus && !editorReadonly"
       }
     ]
