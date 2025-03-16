@@ -11,13 +11,13 @@ async function runCopyPaste(
 
     editor.selections = copySelections;
     if (cut) {
-        await vscode.commands.executeCommand('copy-paste-and-indent.cut');
+        await vscode.commands.executeCommand('better-copy-paste.cut');
     } else {
-        await vscode.commands.executeCommand('copy-paste-and-indent.copy');
+        await vscode.commands.executeCommand('better-copy-paste.copy');
     }
 
     editor.selections = pasteSelections;
-    await vscode.commands.executeCommand('copy-paste-and-indent.paste');
+    await vscode.commands.executeCommand('better-copy-paste.paste');
 
     return document.getText();
 }

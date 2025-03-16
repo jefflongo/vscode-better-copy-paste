@@ -1,17 +1,17 @@
 {
-  "name": "copy-paste-and-indent",
-  "displayName": "Copy/Paste and Indent",
-  "description": "Properly indents copied code on paste",
+  "name": "better-copy-paste",
+  "displayName": "Better Copy/Paste",
+  "description": "Adds intelligent features to copy/paste such as auto-indentation and clipboard history",
   "version": "0.1.0",
   "publisher": "jefflongo",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/jefflongo/vscode-paste-and-indent/issues"
+    "url": "https://github.com/jefflongo/vscode-better-copy-paste/issues"
   },
-  "homepage": "https://github.com/jefflongo/vscode-paste-and-indent/blob/master/README.md",
+  "homepage": "https://github.com/jefflongo/vscode-better-copy-paste/blob/master/README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jefflongo/vscode-paste-and-indent"
+    "url": "https://github.com/jefflongo/vscode-better-copy-paste"
   },
   "engines": {
     "vscode": "^1.98.0"
@@ -28,7 +28,7 @@
     "configuration": {
       "type": "object",
       "properties": {
-        "copy-paste-and-indent.historySize": {
+        "better-copy-paste.historySize": {
           "type": "integer",
           "default": 10,
           "description": "The maximum number of entries to store in the clipboard history."
@@ -37,32 +37,32 @@
     },
     "commands": [
       {
-        "command": "copy-paste-and-indent.clearHistory",
+        "command": "better-copy-paste.clearHistory",
         "title": "Clear Clipboard History",
         "when": "editorTextFocus"
       }
     ],
     "keybindings": [
       {
-        "command": "copy-paste-and-indent.copy",
+        "command": "better-copy-paste.copy",
         "key": "ctrl+c",
         "mac": "cmd+c",
         "when": "editorTextFocus"
       },
       {
-        "command": "copy-paste-and-indent.cut",
+        "command": "better-copy-paste.cut",
         "key": "ctrl+x",
         "mac": "cmd+x",
         "when": "editorTextFocus && !editorReadonly"
       },
       {
-        "command": "copy-paste-and-indent.paste",
+        "command": "better-copy-paste.paste",
         "key": "ctrl+v",
         "mac": "cmd+v",
         "when": "editorTextFocus && !editorReadonly"
       },
       {
-        "command": "copy-paste-and-indent.pasteFromHistory",
+        "command": "better-copy-paste.pasteFromHistory",
         "key": "ctrl+shift+v",
         "mac": "cmd+shift+v",
         "when": "editorTextFocus && !editorReadonly"

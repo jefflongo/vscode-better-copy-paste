@@ -107,7 +107,7 @@ async function copy(log: vscode.OutputChannel, history: string[], cut: boolean =
         }
 
         // shift out the oldest entry if the history is full
-        const extensionConfig = vscode.workspace.getConfiguration("copy-paste-and-indent");
+        const extensionConfig = vscode.workspace.getConfiguration("better-copy-paste");
         const maxSize = extensionConfig.get<number>("historySize", 10);
         if (history.length >= maxSize) {
             history.pop();
@@ -252,24 +252,24 @@ async function pasteFromHistory(log: vscode.OutputChannel, history: readonly str
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    const outputChannel = vscode.window.createOutputChannel("Copy Paste and Indent");
+    const outputChannel = vscode.window.createOutputChannel("Better Copy/Paste");
     const history: string[] = [];
 
     const disposables = [
         vscode.commands.registerCommand(
-            "copy-paste-and-indent.copy", () => copy(outputChannel, history)
+            "better-copy-paste.copy", () => copy(outputChannel, history)
         ),
         vscode.commands.registerCommand(
-            "copy-paste-and-indent.cut", () => copy(outputChannel, history, true)
+            "better-copy-paste.cut", () => copy(outputChannel, history, true)
         ),
         vscode.commands.registerCommand(
-            "copy-paste-and-indent.paste", () => paste(outputChannel)
+            "better-copy-paste.paste", () => paste(outputChannel)
         ),
         vscode.commands.registerCommand(
-            "copy-paste-and-indent.pasteFromHistory", () => pasteFromHistory(outputChannel, history)
+            "better-copy-paste.pasteFromHistory", () => pasteFromHistory(outputChannel, history)
         ),
         vscode.commands.registerCommand(
-            "copy-paste-and-indent.clearHistory",
+            "better-copy-paste.clearHistory",
             () => {
                 vscode.window.setStatusBarMessage("Clipboard history cleared");
                 history.length = 0;

@@ -1,10 +1,10 @@
-# Copy/Paste and Indent
+# Better Copy/Paste
 
-[Copy/Paste and Indent](https://marketplace.visualstudio.com/items?itemName=jefflongo.copy-paste-and-indent) enables intelligent pasting of copied text such that it is automatically aligned to the current indentation level. There are several other extensions which attempt to serve a similar purpose; I found that none of them worked quite right, so I made my own.
+[Better Copy/Paste](https://marketplace.visualstudio.com/items?itemName=jefflongo.better-copy-paste) adds a number of useful features to copy/paste such as auto-indentation of pasted text, and a clipboard history. There are several other extensions which attempt to serve a similar purpose; I found that none of them worked quite right, so I made my own.
 
 ## Installation
 
-There is no special setup to use this extension. This extension simply shadows the default copy/paste keybinds.
+There is no special setup to use this extension. This extension simply shadows the default copy/cut/paste keybinds. The clipboard history can be accessed by adding shift to the paste keybind.
 
 ## How It Works
 
@@ -24,7 +24,7 @@ Currently, indentation is assumed to be either all tabs or all spaces.
 
 ### Other Extensions That Shadow Copy/Paste
 
-This extension is not compatible with other extensions that shadow the copy/paste keybinds. One such extension is [Clipboard History](https://github.com/aefernandes/vscode-clipboard-history-extension). This is because there is no API for intercepting copy/paste outside of binding over the keybinds. To my knowledge, there is no way for extensions to share the keybinds (assuming the keybinds are in the same "when" context), nor would we want other extensions interacting with the clipboard.
+This extension is not compatible with other extensions that shadow the copy/cut/paste keybinds. This is because there is no API for intercepting copy/paste outside of binding over the keybinds. To my knowledge, there is no way for extensions to share the keybinds (assuming the keybinds are in the same "when" context), nor would we want other extensions interacting with the clipboard.
 
 ### Externally Copied Text
 
