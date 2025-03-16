@@ -31,7 +31,7 @@ async function copy(cut: boolean = false) {
     const emptySelectionClipboard = editorConfig.get<boolean>("emptySelectionClipboard", true);
     const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
-    // selections are stored in the order in which they were created. 
+    // selections are stored in the order in which they were created.
     // reorder by line since this is the order in which things will be added to the clipboard.
     const selections = [...editor.selections].sort((a, b) => a.start.line - b.start.line);
 
@@ -121,7 +121,7 @@ async function paste() {
     const formatOnPaste = editorConfig.get<boolean>("formatOnPaste", false);
     const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
-    // selections are stored in the order in which they were created. 
+    // selections are stored in the order in which they were created.
     // reorder by line since this is the order in which things will be pasted if spreading.
     const selections = [...editor.selections].sort((a, b) => a.start.line - b.start.line);
 
@@ -168,7 +168,7 @@ async function paste() {
             const firstLine = editor.document.lineAt(selection.start.line).text;
             const indentation = getIndentation(firstLine);
 
-            // if the selection starts in the indentation, the first line will already be indented 
+            // if the selection starts in the indentation, the first line will already be indented
             // from the unselected portion. trim the indentation for the first line accordingly.
             const firstLineIndentationStart =
                 Math.min(selection.start.character, indentation.length);
