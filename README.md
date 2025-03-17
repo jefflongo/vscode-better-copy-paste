@@ -2,6 +2,8 @@
 
 [Better Copy/Paste](https://marketplace.visualstudio.com/items?itemName=jefflongo.better-copy-paste) adds a number of useful features to copy/paste such as auto-indentation of pasted text, and a clipboard history. There are several other extensions which attempt to serve a similar purpose; I found that none of them worked quite right, so I made my own.
 
+![Better Copy/Paste Demo](/assets/demo.gif)
+
 ## Installation
 
 There is no special setup to use this extension. This extension simply shadows the default copy/cut/paste keybinds. The clipboard history can be accessed by adding shift to the paste keybind.
