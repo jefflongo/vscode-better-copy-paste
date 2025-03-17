@@ -3,7 +3,7 @@
   "displayName": "Better Copy/Paste",
   "description": "Adds intelligent features to copy/paste such as auto-indentation and clipboard history",
   "icon": "assets/icon.png",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "publisher": "jefflongo",
   "license": "MIT",
   "bugs": {
