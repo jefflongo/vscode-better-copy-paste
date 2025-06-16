@@ -29,7 +29,8 @@ async function copy(log: vscode.OutputChannel, history: string[], cut: boolean =
     // get configuration
     const editorConfig = vscode.workspace.getConfiguration("editor");
     const emptySelectionClipboard = editorConfig.get<boolean>("emptySelectionClipboard", true);
-    const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
+    const document = editor.document;
+    const eol = document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
     // selections are stored in the order in which they were created.
     // reorder by line since this is the order in which things will be added to the clipboard.
@@ -38,7 +39,7 @@ async function copy(log: vscode.OutputChannel, history: string[], cut: boolean =
     // get the lines across all selections and determine the minimum indentation
     const lines = selections.flatMap(selection => Array.from(
         { length: selection.end.line - selection.start.line + 1 },
-        (_, i) => editor.document.lineAt(selection.start.line + i).text)
+        (_, i) => document.lineAt(selection.start.line + i).text)
     );
     const minimumIndentation = getMinimumIndentation(lines);
     log.appendLine(`Copy: unindented by ${minimumIndentation} characters`);
@@ -52,7 +53,7 @@ async function copy(log: vscode.OutputChannel, history: string[], cut: boolean =
         for (let lineIndex = selection.start.line; lineIndex <= selection.end.line; lineIndex++) {
             const isFirstLine = lineIndex === selection.start.line;
             const isLastLine = lineIndex === selection.end.line;
-            const line = editor.document.lineAt(lineIndex).text;
+            const line = document.lineAt(lineIndex).text;
             const unindentedLine = line.slice(minimumIndentation);
             let selectionLine = "";
 
@@ -86,13 +87,23 @@ async function copy(log: vscode.OutputChannel, history: string[], cut: boolean =
 
     // handle deletion if cutting
     if (cut) {
-        await editor.edit(editBulider => {
+        await editor.edit(editBuilder => {
             for (const selection of selections) {
                 if (emptySelectionClipboard && selection.isEmpty) {
-                    const lineToDelete = editor.document.lineAt(selection.start.line);
-                    editBulider.delete(lineToDelete.rangeIncludingLineBreak);
+                    const lineNumber = selection.start.line;
+                    const lineToDelete = document.lineAt(lineNumber);
+                    let range = lineToDelete.rangeIncludingLineBreak;
+
+                    // special case on the last line (if it's not the only line in the document):
+                    // since there is no EOL to delete, delete the previous line's EOL
+                    if (lineNumber > 0 && lineNumber === document.lineCount - 1) {
+                        const previousLine = document.lineAt(lineNumber - 1);
+                        range = range.with(previousLine.range.end);
+                    }
+
+                    editBuilder.delete(range);
                 } else {
-                    editBulider.delete(selection);
+                    editBuilder.delete(selection);
                 }
             }
         });
@@ -135,7 +146,8 @@ async function paste(log: vscode.OutputChannel, text?: string) {
     const editorConfig = vscode.workspace.getConfiguration("editor");
     const multiCursorPaste = editorConfig.get<string>("multiCursorPaste", "spread");
     const formatOnPaste = editorConfig.get<boolean>("formatOnPaste", false);
-    const eol = editor.document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
+    const document = editor.document;
+    const eol = document.eol === vscode.EndOfLine.LF ? "\n" : "\r\n";
 
     // selections are stored in the order in which they were created.
     // reorder by line since this is the order in which things will be pasted if spreading.
@@ -185,7 +197,7 @@ async function paste(log: vscode.OutputChannel, text?: string) {
             }
 
             // determine the indentation at the paste location
-            const firstLine = editor.document.lineAt(selection.start.line).text;
+            const firstLine = document.lineAt(selection.start.line).text;
             const indentation = getIndentation(firstLine);
 
             // if the selection starts in the indentation, the first line will already be indented
