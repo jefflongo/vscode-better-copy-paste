@@ -9,15 +9,19 @@ async function runCopyPaste(
     const document = await vscode.workspace.openTextDocument({ content: input });
     const editor = await vscode.window.showTextDocument(document);
 
-    editor.selections = copySelections;
-    if (cut) {
-        await vscode.commands.executeCommand('better-copy-paste.cut');
-    } else {
-        await vscode.commands.executeCommand('better-copy-paste.copy');
+    if (copySelections.length > 0) {
+        editor.selections = copySelections;
+        if (cut) {
+            await vscode.commands.executeCommand('better-copy-paste.cut');
+        } else {
+            await vscode.commands.executeCommand('better-copy-paste.copy');
+        }
     }
 
-    editor.selections = pasteSelections;
-    await vscode.commands.executeCommand('better-copy-paste.paste');
+    if (pasteSelections.length > 0) {
+        editor.selections = pasteSelections;
+        await vscode.commands.executeCommand('better-copy-paste.paste');
+    }
 
     return document.getText();
 }
@@ -135,6 +139,22 @@ suite("Extension Test Suite", () => {
             'hello',
             '',
             '    world',
+        ].join("\n");
+
+        assert.strictEqual(output, expectedOutput);
+    });
+
+    test("Cut last line empty selection", async () => {
+        const input = [
+            'hello world',
+            '',
+        ].join("\n");
+
+        const output = await runCopyPaste(
+            input, [new vscode.Selection(1, 0, 1, 0)], [], true
+        );
+        const expectedOutput = [
+            'hello world',
         ].join("\n");
 
         assert.strictEqual(output, expectedOutput);
